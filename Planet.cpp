@@ -13,7 +13,7 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
     Planet::planet_class = calc_planet_type(inner_zone, 0);
     //Get radius - tables 1.5.2 and 1.5.5, pg. 12
     int selection_roll = RNG::d10();
-    switch (planet_class) 
+    switch (Planet::planet_class) 
     {
     case planet_type::asteroid_belt: //Asteroids
             Planet::radius = 0;
@@ -28,11 +28,11 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
     case planet_type::gas_giant: //Gas giants
             if (selection_roll < 6) 
             {
-                radius = 12000 + 3000.0 * selection_roll + 300.0 * RNG::d10();
+                Planet::radius = 12000 + 3000.0 * selection_roll + 300.0 * RNG::d10();
             }
             else 
             {
-                radius = 10000.0 * RNG::d10() - 30000 + RNG::d10() * 1000.0;
+                Planet::radius = 100000.0 * (selection_roll - 3) + RNG::d10() * 1000.0;
             }
             break;
     case planet_type::superjovian: //Superjovians
@@ -44,29 +44,32 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
         switch(planet_class) 
         {
         case planet_type::asteroid_belt:
-                Planet::density = 0.3 + abs(RNG::d10() + abundance) * 0.1;
-                break;
+            Planet::density = 0.3 + abs(RNG::d10() + abundance) * 0.1;
+            break;
+        case planet_type::chunk:
         case planet_type::terrestrial:
-                Planet::density = 0.3 + abs(RNG::d10() + abundance) * 0.127 / pow((0.4 + (orbital_radius / sqrt(parent_luminosity))), 0.67);
-                break;
+            Planet::density = 0.3 + (float) abs(RNG::d10() + abundance) * 0.127 / pow((0.4 + (orbital_radius / sqrt(parent_luminosity))), 0.67);
+            break;
         case planet_type::gas_giant:
-                Planet::density = 0.1 + abs(RNG::d10() + abundance) * 0.025;
-                break;
+            Planet::density = 0.1 + abs(RNG::d10() + abundance) * 0.025;
+            break;
         }
     }
     else 
     {
         switch(planet_class) 
         {
-            case planet_type::asteroid_belt:
-            case planet_type::terrestrial:
-                Planet::density = 0.1 + abs(RNG::d10() + abundance) * 0.05;
-                break;
-            case planet_type::gas_giant:
-                Planet::density = 0.08 + abs(RNG::d10() + abundance) * 0.025;
-                break;
+        case planet_type::asteroid_belt:
+        case planet_type::chunk:
+        case planet_type::terrestrial:
+            Planet::density = 0.1 + abs(RNG::d10() + abundance) * 0.05;
+            break;
+        case planet_type::gas_giant:
+            Planet::density = 0.08 + abs(RNG::d10() + abundance) * 0.025;
+            break;
         }
     }
+    if (Planet::density > 1.5) { density = 1.5; } //Per 1.5.6 on page 12, "densities cannot be higher than 1.5"
     //Calculate mass (1.5.4, pg. 12)
     if (planet_class == planet_type::superjovian) //Superjovian generation (1.5.5)
     {
@@ -78,10 +81,12 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
         density = mass * pow(6380/radius, 3);
     }
     else if (planet_class == planet_type::asteroid_belt) //Asteroid stuff (TODO)
-    {}
+    {
+        Planet::mass = 0.000492 * Planet::density; //Naive calculation based on the assumption that our solar system's asteroid belt has a similar density to Earth and that the mass doesn't depend on distance from the star
+    }
     else 
     {
-        mass = density * pow(radius/6380, 3);
+        Planet::mass = density * pow(radius/6380, 3);
     }
     //Calculate gravity and escape velocity (1.5.4)
     if (planet_class == planet_type::asteroid_belt) 
@@ -129,10 +134,10 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
                 rotational_period = 0;
                 break;
         case planet_type::terrestrial:
-                rotational_period = pow(RNG::d10(), RNG::d10()/3 - 1) * 2;
+                rotational_period = pow(RNG::d10(), abs(RNG::d10()/3 - 1)) * 2;
                 break;
         case planet_type::chunk:
-                rotational_period = pow(RNG::d10()/2, ((double)RNG::d10())/3.0 - 1.0);
+                rotational_period = pow((int) RNG::d10()/2, abs((double)RNG::d10())/3.0 - 1.0);
                 break;
         case planet_type::gas_giant:
         case planet_type::superjovian:
@@ -203,7 +208,7 @@ Planet::Planet(double parent_mass, double parent_luminosity, double parent_age, 
     //Generate moons from orbits
     for (unsigned i = 0; i < lunar_orbit_list.size(); i++) 
     {
-        moons.push_back(Moon::Moon(mass, density, lunar_orbit_list[i], abundance, parent_luminosity, age, inner_zone));
+        moons.push_back(Moon::Moon(mass, density, lunar_orbit_list[i], orbital_radius, abundance, parent_luminosity, age, inner_zone));
     }
 
     //Composition
@@ -347,13 +352,20 @@ std::string Planet::describe_planet()
     else { return_string += "False\n"; }
     return_string += "Rotational Period (days): " + std::to_string(rotational_period) + "\n";
     return_string += "Axial Tilt (degrees): " + std::to_string((int)axial_tilt) + "\n";
-    //Describe planet surface (with describe_solid())
-    return_string += Solid::describe_solid();
+    //Describe planet
+    if (planet_class == planet_type::terrestrial or planet_class == planet_type::chunk)
+    {
+        return_string += Solid::describe_solid();
+    }
+    else 
+    {
+        return_string += Solid::describe_non_solid();
+    }
     //Describe planet type, in text
     switch (planet_class)
     {
     case planet_type::asteroid_belt:
-        return_string += "This world failed to form, and is just an asteroid belt- the values in the stat block above are either averages or totals over the whole belt, or do not apply.\n"; break;
+        return_string += "This world failed to form, and is just an asteroid belt- the values in the stat block above are either averages or totals over the whole belt, or do not apply.\n "; break;
     case planet_type::terrestrial:
         return_string += "This is a rocky, terrestrial planet, of substantial size.\n "; break;
     case planet_type::chunk:
@@ -363,11 +375,11 @@ std::string Planet::describe_planet()
     case planet_type::superjovian:
         return_string += "This is a supersized gas giant, much larger than any in our solar system.\n "; break;
     }
+    return_string += "\n";
     //Describe moons
     for (unsigned i = 0; i < moons.size(); i++) 
     {
         return_string += moons[i].describe_moon();
     }
-    return_string += "\n";
     return return_string;
 }

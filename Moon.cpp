@@ -1,11 +1,12 @@
 #include "Moon.h"
 
-Moon::Moon(double parent_mass, double parent_density, double orbital_radius, int abundance, double star_luminosity, double age, bool inner_zone) //TODO: Add more params
+Moon::Moon(double parent_mass, double parent_density, double orbital_radius, double solar_orbital_radius, int abundance, double star_luminosity, double age, bool inner_zone) //TODO: Add more params
 {
 
     //Set values passed down from parent
-    Moon::orbital_radius = orbital_radius;
+    Moon::solar_radius = solar_orbital_radius;
     Moon::parent_mass = parent_mass;
+    Moon::orbital_radius = orbital_radius;
 
     //Roll type, radius (2.3.3, pg. 18)
     int selection_value = RNG::d100();
@@ -57,7 +58,7 @@ Moon::Moon(double parent_mass, double parent_density, double orbital_radius, int
     if (isnan(Moon::escape_velocity)) { Moon::escape_velocity = 0; }
 
     //Roche Limit & Ring Formation (2.3.5, pg. 18)
-    if (orbital_radius < 2.456 * pow(parent_density / density, 0.333)) 
+    if (orbital_radius < 2.456 * pow(parent_density / Moon::density, 0.333)) 
     {
         Moon::moon_type = Moon::body_type::ring;
         Moon::gravity = 0;
@@ -67,7 +68,7 @@ Moon::Moon(double parent_mass, double parent_density, double orbital_radius, int
     //Composition
     calculate_composition(density, inner_zone);
     //Surface Temp
-    calculate_surface_temp(orbital_radius, star_luminosity);
+    calculate_surface_temp(Moon::solar_radius, star_luminosity);
 
     if (moon_type != Moon::body_type::ring) 
     {
@@ -115,7 +116,7 @@ std::string Moon::describe_moon()
     return_string += "Orbital Period (days): " + std::to_string(Moon::orbital_period) + "\n";
     return_string += Solid::describe_solid();
     //Textual Description
-    switch (moon_type)
+    switch (Moon::moon_type)
     {
     case body_type::tiny_chunk:
         return_string += "This moon is about the size of a small asteroid.\n "; break;
