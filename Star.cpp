@@ -23,21 +23,21 @@ Star::Star() {
         spectral_class = star_class::K;
         size_code = 5;
     }
-    /**else if (class_roll < 37) //White dwarf code- currently non-functional
+    else if (class_roll < 37) //White dwarf code- currently non-functional
     {
-        spectral_class = 4;
+        spectral_class = star_class::white_dwarf;
         size_code = 7;
-    }**/
+    }
     else if (class_roll < 86) 
     {
         spectral_class = star_class::M;
         size_code = 5;
     }
-    /**else if (class_roll < 99) //Brown dwarf code- currently non-functional
+    else if (class_roll < 99) //Brown dwarf code- currently non-functional
     {
-        spectral_class = 6;
-        //TODO: ADD BROWN DWARF SIZE CODES
-    }**/
+        spectral_class = star_class::brown_dwarf;
+        size_code = -1;
+    }
     else 
     {
         size_code = 3;
@@ -94,25 +94,57 @@ Star::Star() {
         case star_class::M: //M Class stars
             if (size_code == 5) { selection_value = 5; }
             else { selection_value = 14; }
+            break;
+        case star_class::white_dwarf: //White Dwarves
+        case star_class::brown_dwarf: //Brown Dwarves
+            selection_value = 15;
     }
-    //These arrays list the value in the 0 column for each star type
-    long double zero_luminosity [15] = {13000.0, 80, 6.4, 1.36, 0.46, 0.12, 156.0, 19.0, 6.2, 4.0, 280.0, 53.0, 50.0, 120.0, 470.0};
-    double zero_mass [15] = {17.5, 3.0, 1.6, 1.08, 0.82, 0.46, 6.0, 2.5, 1.6, 1.4, 12.0, 8.0, 2.5, 3.0, 6.2};
-    int zero_temp [15] = {28000, 10000, 7500, 6000, 5000, 3500, 9700, 7300, 5900, 4700, 9500, 7200, 5800, 4500, 3400};
-    //double zero_radius [15] = {4.9, 3, 1.5, 1.1, 0.9, 0.8, 4.5, 2.7, 2.4, 3.0, 6.2, 4.7, 7.1, 18.2, 63.0}; //Deprecated in favor of luminosity calculation on page 6
-    //Luminosity is calculated using an exponential
-    long double luminosity_ratio [15] = {0.67, 0.75, 0.86, 0.89, 0.5, 0.81, 0.89, 0.95, 1, 0.86, 0.96, 1.1, 1.4};
-    Star::luminosity = zero_luminosity[selection_value] * powl((long double) luminosity_ratio[selection_value], (long double) subclass);
-    //Mass is calculated linearly
-    double mass_difference [15] = {-1.4, -0.13, -0.06, -0.03, -0.02, -0.05,  -0.3, -0.1, -0.02, 0, -0.5, -0.52, 0.03, 0.3, 0.2};
-    Star::mass = zero_mass [selection_value] + mass_difference [selection_value] * subclass;
-    //Temperature is calculated linearly
-    int temp_difference [15] = {-3000, -250, -150, -100, -150, -150, -250, -100, -150, 0, -250, -150, -100, -100, -100};
-    Star::temp = zero_temp [selection_value] + temp_difference [selection_value] * subclass;
-    /**Radius is calculated linearly (this is not a particularly good approximation but I don't have an obviously better one) //Deprecated in favor of luminosity calculation on page 6
-    double radius_difference [15] = {-0.07, -0.14, -0.04, -0.02, -0.01, -0.07, -0.16, -0.03, 0.06, 0, -0.13, 0.21, 0.92, 3.58, 29.7};
-    radius = zero_radius [selection_value] + radius_difference [selection_value] * subclass; **/
-
+    if (selection_value < 15) {
+        //These arrays list the value in the 0 column for each star type
+        //long double zero_luminosity[15] = { 13000.0, 80, 6.4, 1.36, 0.46, 0.12, 156.0, 19.0, 6.2, 4.0, 280.0, 53.0, 50.0, 120.0, 470.0 }; //Deprecated in favor of mass-based calculation on page 6
+        double zero_mass[15] = { 17.5, 3.0, 1.6, 1.08, 0.82, 0.46, 6.0, 2.5, 1.6, 1.4, 12.0, 8.0, 2.5, 3.0, 6.2 };
+        int zero_temp[15] = { 28000, 10000, 7500, 6000, 5000, 3500, 9700, 7300, 5900, 4700, 9500, 7200, 5800, 4500, 3400 };
+        //double zero_radius [15] = {4.9, 3, 1.5, 1.1, 0.9, 0.8, 4.5, 2.7, 2.4, 3.0, 6.2, 4.7, 7.1, 18.2, 63.0}; //Deprecated in favor of luminosity calculation on page 6
+        //Luminosity is calculated using an exponentia
+        //long double luminosity_ratio[15] = { 0.67, 0.75, 0.86, 0.89, 0.5, 0.81, 0.89, 0.95, 1, 0.86, 0.96, 1.1, 1.4 };
+        //Mass is calculated linearly
+        double mass_difference[15] = { -1.4, -0.13, -0.06, -0.03, -0.02, -0.05,  -0.3, -0.1, -0.02, 0, -0.5, -0.52, 0.03, 0.3, 0.2 };
+        Star::mass = zero_mass[selection_value] + mass_difference[selection_value] * subclass;
+        //Luminosity is calculated using equation listed about halfway down page 6
+        Star::luminosity = pow(mass, 4);
+        //Temperature is calculated linearly
+        int temp_difference[15] = { -3000, -250, -150, -100, -150, -150, -250, -100, -150, 0, -250, -150, -100, -100, -100 };
+        Star::temp = zero_temp[selection_value] + temp_difference[selection_value] * subclass;
+        /**Radius is calculated linearly (this is not a particularly good approximation but I don't have an obviously better one) //Deprecated in favor of luminosity calculation on page 6
+        double radius_difference [15] = {-0.07, -0.14, -0.04, -0.02, -0.01, -0.07, -0.16, -0.03, 0.06, 0, -0.13, 0.21, 0.92, 3.58, 29.7};
+        radius = zero_radius [selection_value] + radius_difference [selection_value] * subclass; **/
+        Star::radius = pow(luminosity, 0.5) * pow((5800 / temp), 2);
+    }
+    else 
+    {
+        int selection_value = RNG::d10() - 1;
+        double white_dwarf_mass_table[10] = { 1.3, 1.1, 0.9, 0.7, 0.6, 0.55, 0.50, 0.45, 0.40, 0.35 }; //Data from table 1.1.4, on page 7
+        double white_dwarf_radius_table[10] = { 0.004, 0.007, 0.009, 0.010, 0.011, 0.012, 0.013, 0.014, 0.015, 0.016 };
+        double white_dwarf_temp_table[10] = { 30000, 25000, 20000, 16000, 14000, 12000, 10000, 8000, 6000, 4000 };
+        double brown_dwarf_mass_table[10] = { 0.070, 0.064, 0.058, 0.052, 0.046, 0.040, 0.034, 0.026, 0.020, 0.014 }; //Data from table 1.1.5, on page 7
+        double brown_dwarf_radius_table[10] = { 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.12, 0.12, 0.12, 0.12 };
+        double brown_dwarf_temp_table[10] = { 2200, 2000, 1800, 1600, 1400, 1200, 1000, 900, 800, 700 };
+        switch (spectral_class)
+        {
+        case star_class::white_dwarf: //White Dwarves
+            Star::mass = white_dwarf_mass_table[selection_value];
+            Star::radius = white_dwarf_radius_table[selection_value];
+            Star::temp = white_dwarf_temp_table[selection_value];
+            Star::luminosity = pow(radius, 2) * pow(temp, 4) / pow(5800, 4);
+            break;
+        case star_class::brown_dwarf: //Brown Dwarves
+            Star::mass = brown_dwarf_mass_table[selection_value];
+            Star::radius = brown_dwarf_radius_table[selection_value];
+            Star::temp = brown_dwarf_temp_table[selection_value];
+            Star::luminosity = pow(radius, 2) * pow(temp, 4) / pow(5800, 4);
+            break;
+        }
+    }
     //Modify Subgiants
     if (size_code == 4)
     {
@@ -126,8 +158,9 @@ Star::Star() {
     }
 
     //Radius is calculated using the euqation on page 6
-    Star::radius = sqrt(Star::luminosity) * pow((5800 / Star::temp), 2);
-
+    if (selection_value < 15) {
+        Star::radius = sqrt(Star::luminosity) * pow((5800 / Star::temp), 2);
+    }
     //Flare star calculation (pg. 7)
     if ((spectral_class == star_class::M) && (10 > subclass) && (subclass > 2) && (RNG::d10() < 6)) 
     {
@@ -140,20 +173,28 @@ Star::Star() {
     double lifespan [14] = {0.1, 0.1, 0.6, 1.3, 3.2, 5.6, 10, 14, 23, 42, 0.01, 0.01, 50, 50};
     selection_value =  (int) spectral_class * 2 + subclass/5;
 
-    if (size_code == 5) //Main seq. stars
+    selection_value = RNG::d10();
+
+    switch (size_code) 
     {
-        int age_roll = RNG::d10();
-        Star::age = (float) (age_roll * year_multiplier[selection_value]);
+    case -1: //Special stars (currently only brown dwarves)
+        Star::age = selection_value;
+        break;
+    case 2: //Giant stars
+        Star::age = (float)(lifespan[selection_value] * 1.2);
+        break;
+    case 4: //Subgiants
+        Star::age = (float)(lifespan[selection_value] * 1.1);
+        break;
+    case 5: //Main sequence
+        Star::age = (float)(RNG::d10() * year_multiplier[selection_value]);
         //Star::luminosity = Star::luminosity * age_roll * lum_multiplier[selection_value];
+        break;
+    case 7: //White dwarves
+        Star::age = selection_value;
+        break;
     }
-    else if (size_code == 4) //Subgiants
-    {
-        Star::age = (float) (lifespan[selection_value] * 1.1);
-    }
-    else //Giant stars 
-    {
-        Star::age = (float) (lifespan[selection_value] * 1.2);
-    }
+
 
     //Omitted lifespan (1.2.2, pg. 8)
 
@@ -172,6 +213,7 @@ Star::Star() {
     if (Star::spectral_class == star_class::K && Star::subclass > 4) {selection_value += 1;}
     else if (Star::spectral_class == star_class::M && Star::subclass < 5) {selection_value += 2;}
     else if (Star::spectral_class == star_class::M && Star::subclass > 4) {selection_value += 3;}
+    else if (Star::spectral_class == star_class::brown_dwarf) { selection_value += 5; }
     if (selection_value == 1) {orbit_number = RNG::d10() + 10;}
     else if (selection_value < 6) {orbit_number = RNG::d10() + 5;}
     else if (selection_value < 8) {orbit_number = RNG::d10();}
@@ -195,6 +237,25 @@ Star::Star() {
             if (orbits[i] >= 0.025 * sqrt(luminosity))
             {
                 final_orbits.push_back(orbits[i]);
+            }
+        }
+        //If white dwarf, remove certain orbits
+        if (Star::spectral_class == star_class::white_dwarf) 
+        {
+            selection_value = RNG::d10();
+            int removal_limit = 0;
+            if (Star::mass > 0.9) { selection_value += 4; }
+            else if (Star::mass > 0.6) { selection_value += 2; }
+            if (selection_value > 11) { removal_limit = 10; }
+            else if (selection_value > 8) { removal_limit = 6; }
+            else if (selection_value > 4) { removal_limit = 4; }
+            else { removal_limit = 2; }
+            for (unsigned i = 0; i < orbits.size(); i++) 
+            {
+                if (orbits[i] > removal_limit)
+                {
+                    final_orbits.push_back(orbits[i]);
+                }
             }
         }
         //Create planets
@@ -257,7 +318,11 @@ std::string Star::describe_star()
     //Textual Description
     if (size_code != 7) //Calculate color from surface temp (using data from Table 1 on this page: https://courses.lumenlearning.com/astronomy/chapter/colors-of-stars/)
     {
-        if (temp < 2000)
+        if (temp < 1000)
+        {
+            return_string += "This is a dully glowing ";
+        }
+        else if (temp < 2000)
         {
             return_string += "This is a dim red ";
         }
@@ -285,7 +350,8 @@ std::string Star::describe_star()
     switch (size_code) 
     {
         case -1:
-            return_string += "anomalous star. It does not fit into normal stellar classifications. "; break;
+            if (spectral_class == star_class::brown_dwarf) { return_string += "brown dwarf \"star\". This object is smaller than a true star, and has not achieved fusion. "; break; }
+            else { return_string += "anomalous star. It does not fit into normal stellar classifications. "; break; }
         case 1:
             return_string += "supergiant star. It is many times larger than Sol, although it likely has a much lower density. "; break;
         case 2:
@@ -312,7 +378,7 @@ std::string Star::describe_star()
         case -1:
             return_string += "This system is somewhat lacking in heavier elements, like oxygen, carbon, and metals. This makes it more difficult for planets to form. "; break;
         case 0:
-            return_string += "This system has an average amount of heavier elements, that is elements other than hydrogen and helium. Planets can form normally. "; break;
+            return_string += "This system has an average amount of heavier elements, meaning elements other than hydrogen and helium. Planets can form normally. "; break;
         case 1:
             return_string += "This system is rich in elements heavier than hydrogen and helium, like metals. This makes it easier for planets to form. "; break;
         case 2:

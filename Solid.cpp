@@ -120,7 +120,7 @@ void Solid::calculate_magnetic_field(Solid::composition body_composition, double
 
 void Solid::calculate_surface_temp(double orbital_distance, double luminosity) //Luminosity from 4.1.1, pg. 27
 {
-    temp = (int) (255 / sqrt(orbital_distance / sqrt(luminosity)));
+    Solid::temp = (int) (255 / sqrt(orbital_distance / sqrt(luminosity)));
 }
 
 void Solid::calculate_hydrosphere(bool inner_zone, int surface_temp, int radius) //Hydrosphere from 4.2.1, 4.2.2, & 4.2.3 (pg. 28) 
@@ -522,6 +522,7 @@ void Solid::recalc_surface_temp(double total_pressure, std::vector <Gas> gases, 
     Solid::temp = (int) ((double)surface_temp * albedo * greenhouse_factor);
 }
 
+
 std::string Solid::describe_solid()
 {
     std::string return_string = "";
@@ -564,7 +565,7 @@ std::string Solid::describe_solid()
     //Magnetic Field
     if (magnetic_field == 0)
     {
-        return_string += "This world lack's a magnetic field entirely. ";
+        return_string += "This world lacks a magnetic field entirely. ";
     }
     else if (magnetic_field <= 0.1)
     {
@@ -656,14 +657,100 @@ std::string Solid::describe_solid()
         {
             return_string += "This world has an incredibly thick, crushing atmosphere. Very little light can reach the surface, and almost nothing can survive. It is made up of: ";
         }
-        for (unsigned i = 0; i < gases.size() - 1; i++)
-        {
-            return_string += gas_names[(int)gases[i].gas] + ", ";
+        if (gases.size() > 1) {
+            for (unsigned i = 0; i < gases.size() - 1; i++)
+            {
+                return_string += gas_names[(int)gases[i].gas] + ", ";
+            }
+            return_string += "and " + gas_names[(int)gases[gases.size() - 1].gas] + ". ";
         }
-        return_string += "and " + gas_names[(int)gases[gases.size() - 1].gas] + ". ";
+        else
+        {
+            return_string += gas_names[(int)gases[0].gas] + ". ";
+        }
     }
     //Albedo
     //Albedo should probably not be described here, in my opinion
 
+    return return_string;
+}
+
+std::string Solid::describe_non_solid()
+{
+    std::string return_string = "";
+    //Magnetic Field
+    if (magnetic_field == 0)
+    {
+        return_string += "This world lacks a magnetic field entirely. ";
+    }
+    else if (magnetic_field <= 0.1)
+    {
+        return_string += "This world has a very weak magnetic field, less than 10% of Earth's. It provides little protection to the surface. ";
+    }
+    else if (magnetic_field <= 0.75)
+    {
+        return_string += "This body has a weak magnetic field, substantially less than Earth. It provides some protection from solar radiation. ";
+    }
+    else if (magnetic_field <= 1.25)
+    {
+        return_string += "This body has an Earth-like magnetic field. It provides strong protection from radiation to the surface, and aurorae can be seen near the poles. ";
+    }
+    else if (magnetic_field <= 3)
+    {
+        return_string += "This body has a strong magnetic field. The surface is well-protected and the planet exhibits strong aurorae, but it also has dangerous radiation belts. ";
+    }
+    else
+    {
+        return_string += "This world has a very strong magnetic field. This field is very effective at trapping radiation, creating dangerous radiation belts and incredible aurorae. ";
+    }
+    //Surface Temp
+    if (temp < 25)
+    {
+        return_string += "The temperatures here are absolutely frigid- many substances that are normally found as gases are liquids or solids on the surface. ";
+    }
+    else if (temp < 100)
+    {
+        return_string += "The temperature of this world is very cold and inhospitable. ";
+    }
+    else if (temp < 200)
+    {
+        return_string += "This body is freezing, but may support some unusual forms of life, or a few warm oases. ";
+    }
+    else if (temp < 350)
+    {
+        return_string += "This world is relatively hospitable, and may support hardy water-based life. ";
+    }
+    else if (temp < 500)
+    {
+        return_string += "This body is too hot for most forms of life, but some exotic life forms may be able to survive. ";
+    }
+    else if (temp < 1000)
+    {
+        return_string += "The surface of this object is scorching, unsuitable for nearly any kind of life. ";
+    }
+    else
+    {
+        return_string += "The hellish surface of this body is so hot that it glows! ";
+    }
+    //Atmosphere
+    if (total_pressure == 0)
+    {
+        return_string += "This body has only an insignificant trace atmosphere. ";
+    }
+    else
+    {
+        return_string += "This planet's atmosphere is composed of ";
+        if (gases.size() > 1) {
+            for (unsigned i = 0; i < gases.size() - 1; i++)
+            {
+                return_string += gas_names[(int)gases[i].gas] + ", ";
+            }
+            return_string += "and " + gas_names[(int)gases[gases.size() - 1].gas] + ". ";
+        }
+        else
+        {
+            return_string += gas_names[(int)gases[0].gas] + ". ";
+        }
+    }
     return return_string;
 }

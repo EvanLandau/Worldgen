@@ -13,6 +13,7 @@ public:
     double density; //in earth densities
     long double mass; //in earth masses
     double gravity; //in g
+    double solar_radius; //In relation to the sun, in AU
     double orbital_radius; //(in relation to parent) in km
     double orbital_period; //in days
     enum body_type moon_type;
@@ -20,6 +21,6 @@ public:
     //Parent Values
     double parent_mass; //in earth masses
     //Methods
-    Moon(double parent_mass, double parent_density, double orbital_radius, int abundance, double star_luminosity, double age, bool inner_zone);
+    Moon(double parent_mass, double parent_density, double orbital_radius, double solar_orbital_radius, int abundance, double star_luminosity, double age, bool inner_zone);
     std::string describe_moon();
 };

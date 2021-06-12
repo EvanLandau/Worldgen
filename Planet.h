@@ -24,7 +24,7 @@ public:
     double perihelion;
     //Planet Values
     enum class planet_type { asteroid_belt, terrestrial, chunk, gas_giant, superjovian } planet_class; //0 - Asteroid Belt, 1 - Terrestrial, 2 - Chunk, 3 - Gas Giant, 4 - Superjovian
-    double radius; //in km
+    long double radius; //in km
     double density; //in earth densities
     double mass; //in earth masses
     double gravity; //in earth gravities

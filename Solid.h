@@ -39,4 +39,5 @@ public:
     //TODO: Implement life?
     //Return values
     std::string describe_solid();
+    std::string describe_non_solid();
 };
